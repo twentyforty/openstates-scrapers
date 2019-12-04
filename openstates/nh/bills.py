@@ -6,6 +6,7 @@ import pytz
 from pupa.scrape import Scraper, Bill, VoteEvent as Vote
 
 from openstates.nh.legacyBills import NHLegacyBillScraper
+from openstates.utils import LXMLMixin
 
 
 body_code = {'lower': 'H', 'upper': 'S'}
@@ -51,13 +52,18 @@ def extract_amendment_id(action):
         return piece[0]
 
 
-class NHBillScraper(Scraper):
+class NHBillScraper(Scraper, LXMLMixin):
+    bills = {}
 
-    def scrape(self, chamber=None, session=None):
+    def scrape(self, chamber=None, session=None, prefiles=None):
         if not session:
             session = self.latest_session()
             self.info('no session specified, using %s', session)
         chambers = [chamber] if chamber else ['upper', 'lower']
+        if prefiles == "true":
+            print("PREFILES")
+            self.scrape_prefiles(session)
+
         for chamber in chambers:
             yield from self.scrape_chamber(chamber, session)
 
@@ -71,7 +77,7 @@ class NHBillScraper(Scraper):
             return
 
         # bill basics
-        self.bills = {}         # LSR->Bill
+        # self.bills = {}         # LSR->Bill
         self.bills_by_id = {}   # need a second table to attach votes
         self.versions_by_lsr = {}  # mapping of bill ID to lsr
         self.amendments_by_lsr = {}
@@ -107,17 +113,7 @@ class NHBillScraper(Scraper):
             bill_id = line[10]
 
             if body == body_code[chamber] and session_yr == session:
-                if expanded_bill_id.startswith('CACR'):
-                    bill_type = 'constitutional amendment'
-                elif expanded_bill_id.startswith('PET'):
-                    bill_type = 'petition'
-                elif expanded_bill_id.startswith('AR') and bill_id.startswith('CACR'):
-                    bill_type = 'constitutional amendment'
-                elif expanded_bill_id.startswith('SSSB') or expanded_bill_id.startswith('SSHB'):
-                    # special session house/senate bills
-                    bill_type = 'bill'
-                else:
-                    bill_type = bill_type_map[expanded_bill_id.split(' ')[0][1:]]
+                bill_type = self.classify_bill_type(expanded_bill_id, bill_id)
 
                 if title.startswith('('):
                     title = title.split(')', 1)[1].strip()
@@ -127,6 +123,8 @@ class NHBillScraper(Scraper):
                                        identifier=bill_id,
                                        title=title,
                                        classification=bill_type)
+
+                self.bills[lsr].extras['LSR'] = lsr
 
                 # http://www.gencourt.state.nh.us/bill_status/billText.aspx?sy=2017&id=95&txtFormat=html
                 if lsr in self.versions_by_lsr:
@@ -226,6 +224,59 @@ class NHBillScraper(Scraper):
             # bill.add_source(zip_url)
             self.add_source(self.bills[bill], bill, session)
             yield self.bills[bill]
+
+    def classify_bill_type(self, expanded_bill_id, bill_id):
+        if expanded_bill_id.startswith('CACR'):
+            bill_type = 'constitutional amendment'
+        elif expanded_bill_id.startswith('PET'):
+            bill_type = 'petition'
+        elif expanded_bill_id.startswith('AR') and bill_id.startswith('CACR'):
+            bill_type = 'constitutional amendment'
+        elif expanded_bill_id.startswith('SSSB') or expanded_bill_id.startswith('SSHB'):
+            # special session house/senate bills
+            bill_type = 'bill'
+        else:
+            print(expanded_bill_id)
+            print(re.split('/\d+/', expanded_bill_id))
+            bill_type = bill_type_map[re.split('\d+', expanded_bill_id)[0][1:]]
+        return bill_type
+
+    # bill requests follow a different format in the bulk data
+    def scrape_prefiles(self, session):
+        for line in self.get('http://gencourt.state.nh.us/dynamicdatafiles/LsrsOnly.txt') \
+                        .content.decode('utf-8').split("\n"):
+            if len(line) < 1:
+                continue
+            # a few blank/irregular lines, irritating
+            if '|' not in line:
+                continue
+
+            line = line.split('|')
+
+            bill_id = line[5]
+
+            if not bill_id:
+                continue
+
+            title = line[7]
+            body = line[6]
+            lsr = line[1].strip()
+
+            chamber = 'lower' if body == 'H' else 'upper'
+            # there's an edge case where the two columns of bill ids provided in Lsrs.txt
+            # don't match types, which doesn't seem to occur with prefiles.
+            # so we can just pass bill id for both args
+            bill_type = self.classify_bill_type(bill_id, bill_id)
+
+            self.bills[lsr] = Bill(legislative_session=session,
+                                    chamber=chamber,
+                                    identifier=bill_id,
+                                    title=title,
+                                    classification=bill_type)
+
+            print(self.bills[lsr])
+
+            self.bills[lsr].extras['LSR'] = lsr
 
     def add_source(self, bill, lsr, session):
         bill_url = 'http://www.gencourt.state.nh.us/bill_Status/bill_status.aspx?' + \
