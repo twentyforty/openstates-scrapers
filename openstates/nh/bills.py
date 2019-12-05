@@ -63,7 +63,9 @@ class NHBillScraper(Scraper, LXMLMixin):
     versions_by_lsr = {}
     amendments_by_lsr = {}
 
-    def scrape(self, chamber=None, session=None, prefiles=None):
+    # To scrape prefiles, provide a session= and a prefile=true
+    # pupa update nh bills --scrape session=2020 prefile=true
+    def scrape(self, chamber=None, session=None, prefile=None):
         if not session:
             session = self.latest_session()
             self.info('no session specified, using %s', session)
@@ -74,7 +76,7 @@ class NHBillScraper(Scraper, LXMLMixin):
         self.scrape_version_ids()
         self.scrape_amendments()
 
-        if prefiles == "true":
+        if prefile == "true":
             self.scrape_prefiles(session)
         else:
             for chamber in chambers:
