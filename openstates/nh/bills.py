@@ -34,6 +34,8 @@ action_classifiers = [
     ('Amendment .* Failed', 'amendment-failure'),
     ('Signed', 'executive-signature'),
     ('Vetoed', 'executive-veto'),
+    ('Law Without Signature', 'became-law'),
+    ('Inexpedient to Legislate', 'failure'),
 ]
 VERSION_URL = 'http://www.gencourt.state.nh.us/legislation/%s/%s.html'
 AMENDMENT_URL = 'http://www.gencourt.state.nh.us/legislation/amendments/%s.html'
@@ -74,17 +76,15 @@ class NHBillScraper(Scraper, LXMLMixin):
 
         if prefiles == "true":
             self.scrape_prefiles(session)
-
-        #for chamber in chambers:
-            # self.scrape_chamber(chamber, session)
+        else:
+            for chamber in chambers:
+                yield from self.scrape_chamber(chamber, session)
 
         self.add_sponsors(session)
         self.add_actions(session)
 
         # save all bills
         for bill in self.bills:
-            # bill.add_source(zip_url)
-            print(bill)
             self.add_source(self.bills[bill], bill, session)
             yield self.bills[bill]
 
@@ -122,11 +122,10 @@ class NHBillScraper(Scraper, LXMLMixin):
             title = line[2]
             body = line[3]
             # type_num = line[4]
-            expanded_bill_id = line[9]
+            # expanded_bill_id = line[9]
             bill_id = line[10]
-
             if body == body_code[chamber] and session_yr == session:
-                bill_type = self.classify_bill_type(expanded_bill_id, bill_id)
+                bill_type = self.classify_bill_type(bill_id)
 
                 if title.startswith('('):
                     title = title.split(')', 1)[1].strip()
@@ -154,6 +153,7 @@ class NHBillScraper(Scraper, LXMLMixin):
                                                      media_type='application/pdf')
 
                 self.bills_by_id[bill_id] = self.bills[lsr]
+
         yield from self.scrape_votes(session)
 
     def scrape_legislators(self):
@@ -187,18 +187,18 @@ class NHBillScraper(Scraper, LXMLMixin):
                                                 url=version_url,
                                                 media_type='text/html')
 
-    def classify_bill_type(self, expanded_bill_id, bill_id):
+    def classify_bill_type(self, expanded_bill_id):
         if expanded_bill_id.startswith('CACR'):
             bill_type = 'constitutional amendment'
         elif expanded_bill_id.startswith('PET'):
             bill_type = 'petition'
-        elif expanded_bill_id.startswith('AR') and bill_id.startswith('CACR'):
+        elif expanded_bill_id.startswith('AR'):
             bill_type = 'constitutional amendment'
         elif expanded_bill_id.startswith('SSSB') or expanded_bill_id.startswith('SSHB'):
             # special session house/senate bills
             bill_type = 'bill'
         else:
-            bill_type = bill_type_map[re.split('\d+', expanded_bill_id)[0][1:]]
+            bill_type = bill_type_map[re.split(r'\d+', expanded_bill_id)[0][1:]]
         return bill_type
 
     # bill requests follow a different format in the bulk data
