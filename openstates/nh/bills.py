@@ -227,7 +227,7 @@ class NHBillScraper(Scraper, LXMLMixin):
                 # there's an edge case where the two columns of bill ids provided in Lsrs.txt
                 # don't match types, which doesn't seem to occur with prefiles.
                 # so we can just pass bill id for both args
-                bill_type = self.classify_bill_type(bill_id, bill_id)
+                bill_type = self.classify_bill_type(bill_id)
 
                 self.bills[lsr] = Bill(legislative_session=session,
                                        chamber=chamber,
@@ -242,7 +242,6 @@ class NHBillScraper(Scraper, LXMLMixin):
             sponsor_num = line[1]
             sp_type = 'primary' if sponsor_type == 'Prime' else 'cosponsor'
             try:
-                print("ADDING SPONSOR {} {}", self.legislators[sponsor_num]['name'], bill_id)
                 self.bills[lsr].add_sponsorship(classification=sp_type,
                                                 name=self.legislators[sponsor_num]['name'],
                                                 entity_type='person',
