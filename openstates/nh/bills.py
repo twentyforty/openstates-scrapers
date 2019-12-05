@@ -88,8 +88,6 @@ class NHBillScraper(Scraper, LXMLMixin):
             self.add_source(self.bills[bill], bill, session)
             yield self.bills[bill]
 
-
-
     def scrape_chamber(self, chamber, session):
         if int(session) < 2017:
             legacy = NHLegacyBillScraper(self.metadata, self.datadir)
@@ -180,12 +178,12 @@ class NHBillScraper(Scraper, LXMLMixin):
         if lsr in self.versions_by_lsr:
             version_id = self.versions_by_lsr[lsr]
             version_url = 'http://www.gencourt.state.nh.us/bill_status/' \
-                            'billText.aspx?sy={}&id={}&txtFormat=html' \
-                            .format(session, version_id)
+                'billText.aspx?sy={}&id={}&txtFormat=html' \
+                .format(session, version_id)
 
             self.bills[lsr].add_version_link(note='latest version',
-                                                url=version_url,
-                                                media_type='text/html')
+                                             url=version_url,
+                                             media_type='text/html')
 
     def classify_bill_type(self, expanded_bill_id):
         if expanded_bill_id.startswith('CACR'):
@@ -230,10 +228,10 @@ class NHBillScraper(Scraper, LXMLMixin):
                 bill_type = self.classify_bill_type(bill_id, bill_id)
 
                 self.bills[lsr] = Bill(legislative_session=session,
-                                        chamber=chamber,
-                                        identifier=bill_id,
-                                        title=title,
-                                        classification=bill_type)
+                                       chamber=chamber,
+                                       identifier=bill_id,
+                                       title=title,
+                                       classification=bill_type)
                 self.bills[lsr].extras['LSR'] = lsr
                 self.add_versions(session, lsr)
 
@@ -252,7 +250,6 @@ class NHBillScraper(Scraper, LXMLMixin):
                     self.bills[lsr].extras['primary_seat'] = self.legislators[sponsor_num]['seat']
             except KeyError:
                 self.warning("Error, can't find person %s" % sponsor_num)
-
 
     def add_actions(self, session):
         for line in self.get('http://gencourt.state.nh.us/dynamicdatafiles/Docket.txt') \
