@@ -53,19 +53,42 @@ def extract_amendment_id(action):
 
 
 class NHBillScraper(Scraper, LXMLMixin):
-    bills = {}
+    # mapping tables to go between the txt files
+    bills = {}  # LSR->Bill
+    legislators = {}
+
+    bills_by_id = {}   # need a second table to attach votes
+    versions_by_lsr = {}
+    amendments_by_lsr = {}
 
     def scrape(self, chamber=None, session=None, prefiles=None):
         if not session:
             session = self.latest_session()
             self.info('no session specified, using %s', session)
         chambers = [chamber] if chamber else ['upper', 'lower']
+
+        self.scrape_legislators()
+        # # pre load the mapping table of LSR -> version id
+        self.scrape_version_ids()
+        self.scrape_amendments()
+
         if prefiles == "true":
-            print("PREFILES")
             self.scrape_prefiles(session)
 
-        for chamber in chambers:
-            yield from self.scrape_chamber(chamber, session)
+        #for chamber in chambers:
+            # self.scrape_chamber(chamber, session)
+
+        self.add_sponsors(session)
+        self.add_actions(session)
+
+        # save all bills
+        for bill in self.bills:
+            # bill.add_source(zip_url)
+            print(bill)
+            self.add_source(self.bills[bill], bill, session)
+            yield self.bills[bill]
+
+
 
     def scrape_chamber(self, chamber, session):
         if int(session) < 2017:
@@ -75,16 +98,6 @@ class NHBillScraper(Scraper, LXMLMixin):
             # even though it saves fine. So fake the output_names
             self.output_names = ['1']
             return
-
-        # bill basics
-        # self.bills = {}         # LSR->Bill
-        self.bills_by_id = {}   # need a second table to attach votes
-        self.versions_by_lsr = {}  # mapping of bill ID to lsr
-        self.amendments_by_lsr = {}
-
-        # pre load the mapping table of LSR -> version id
-        self.scrape_version_ids()
-        self.scrape_amendments()
 
         last_line = []
         for line in self.get('http://gencourt.state.nh.us/dynamicdatafiles/LSRs.txt') \
@@ -126,16 +139,7 @@ class NHBillScraper(Scraper, LXMLMixin):
 
                 self.bills[lsr].extras['LSR'] = lsr
 
-                # http://www.gencourt.state.nh.us/bill_status/billText.aspx?sy=2017&id=95&txtFormat=html
-                if lsr in self.versions_by_lsr:
-                    version_id = self.versions_by_lsr[lsr]
-                    version_url = 'http://www.gencourt.state.nh.us/bill_status/' \
-                                  'billText.aspx?sy={}&id={}&txtFormat=html' \
-                                  .format(session, version_id)
-
-                    self.bills[lsr].add_version_link(note='latest version',
-                                                     url=version_url,
-                                                     media_type='text/html')
+                self.add_versions(session, lsr)
 
                 # http://gencourt.state.nh.us/bill_status/billtext.aspx?sy=2017&txtFormat=amend&id=2017-0464S
                 if lsr in self.amendments_by_lsr:
@@ -150,9 +154,9 @@ class NHBillScraper(Scraper, LXMLMixin):
                                                      media_type='application/pdf')
 
                 self.bills_by_id[bill_id] = self.bills[lsr]
+        yield from self.scrape_votes(session)
 
-        # load legislators
-        self.legislators = {}
+    def scrape_legislators(self):
         for line in self.get('http://gencourt.state.nh.us/dynamicdatafiles/legislators.txt') \
                         .content.decode('utf-8').split("\n"):
             if len(line) < 1:
@@ -171,27 +175,86 @@ class NHBillScraper(Scraper, LXMLMixin):
                                               'seat': line[5]}
             # body = line[4]
 
-        # sponsors
-        for line in self.get('http://gencourt.state.nh.us/dynamicdatafiles/LsrSponsors.txt') \
+    def add_versions(self, session, lsr):
+        # http://www.gencourt.state.nh.us/bill_status/billText.aspx?sy=2017&id=95&txtFormat=html
+        if lsr in self.versions_by_lsr:
+            version_id = self.versions_by_lsr[lsr]
+            version_url = 'http://www.gencourt.state.nh.us/bill_status/' \
+                            'billText.aspx?sy={}&id={}&txtFormat=html' \
+                            .format(session, version_id)
+
+            self.bills[lsr].add_version_link(note='latest version',
+                                                url=version_url,
+                                                media_type='text/html')
+
+    def classify_bill_type(self, expanded_bill_id, bill_id):
+        if expanded_bill_id.startswith('CACR'):
+            bill_type = 'constitutional amendment'
+        elif expanded_bill_id.startswith('PET'):
+            bill_type = 'petition'
+        elif expanded_bill_id.startswith('AR') and bill_id.startswith('CACR'):
+            bill_type = 'constitutional amendment'
+        elif expanded_bill_id.startswith('SSSB') or expanded_bill_id.startswith('SSHB'):
+            # special session house/senate bills
+            bill_type = 'bill'
+        else:
+            bill_type = bill_type_map[re.split('\d+', expanded_bill_id)[0][1:]]
+        return bill_type
+
+    # bill requests follow a different format in the bulk data
+    def scrape_prefiles(self, session):
+        for line in self.get('http://gencourt.state.nh.us/dynamicdatafiles/LsrsOnly.txt') \
                         .content.decode('utf-8').split("\n"):
             if len(line) < 1:
                 continue
+            # a few blank/irregular lines, irritating
+            if '|' not in line:
+                continue
 
-            session_yr, lsr, _seq, employee, primary = line.strip().split('|')
+            line = line.split('|')
 
-            if session_yr == session and lsr in self.bills:
-                sp_type = 'primary' if primary == '1' else 'cosponsor'
-                try:
-                    self.bills[lsr].add_sponsorship(classification=sp_type,
-                                                    name=self.legislators[employee]['name'],
-                                                    entity_type='person',
-                                                    primary=True if sp_type == 'primary'
-                                                    else False)
-                    self.bills[lsr].extras = {'_code': self.legislators[employee]['seat']}
-                except KeyError:
-                    self.warning("Error, can't find person %s" % employee)
+            bill_id = line[5]
+            lsr = line[0].strip().split('-')[1]
 
-        # actions
+            if not bill_id:
+                continue
+
+            if lsr not in self.bills:
+                title = line[7]
+                body = line[6]
+
+                chamber = 'lower' if body == 'H' else 'upper'
+                # there's an edge case where the two columns of bill ids provided in Lsrs.txt
+                # don't match types, which doesn't seem to occur with prefiles.
+                # so we can just pass bill id for both args
+                bill_type = self.classify_bill_type(bill_id, bill_id)
+
+                self.bills[lsr] = Bill(legislative_session=session,
+                                        chamber=chamber,
+                                        identifier=bill_id,
+                                        title=title,
+                                        classification=bill_type)
+                self.bills[lsr].extras['LSR'] = lsr
+                self.add_versions(session, lsr)
+
+            # sponsors aren't in the main file
+            sponsor_type = line[4]
+            sponsor_num = line[1]
+            sp_type = 'primary' if sponsor_type == 'Prime' else 'cosponsor'
+            try:
+                print("ADDING SPONSOR {} {}", self.legislators[sponsor_num]['name'], bill_id)
+                self.bills[lsr].add_sponsorship(classification=sp_type,
+                                                name=self.legislators[sponsor_num]['name'],
+                                                entity_type='person',
+                                                primary=True if sp_type == 'primary'
+                                                else False)
+                if sp_type == 'primary':
+                    self.bills[lsr].extras['primary_seat'] = self.legislators[sponsor_num]['seat']
+            except KeyError:
+                self.warning("Error, can't find person %s" % sponsor_num)
+
+
+    def add_actions(self, session):
         for line in self.get('http://gencourt.state.nh.us/dynamicdatafiles/Docket.txt') \
                         .content.decode('utf-8').split("\n"):
             if len(line) < 1:
@@ -217,74 +280,33 @@ class NHBillScraper(Scraper, LXMLMixin):
                     self.bills[lsr].add_document_link(note='amendment %s' % amendment_id,
                                                       url=AMENDMENT_URL % amendment_id)
 
-        yield from self.scrape_votes(session)
-
-        # save all bills
-        for bill in self.bills:
-            # bill.add_source(zip_url)
-            self.add_source(self.bills[bill], bill, session)
-            yield self.bills[bill]
-
-    def classify_bill_type(self, expanded_bill_id, bill_id):
-        if expanded_bill_id.startswith('CACR'):
-            bill_type = 'constitutional amendment'
-        elif expanded_bill_id.startswith('PET'):
-            bill_type = 'petition'
-        elif expanded_bill_id.startswith('AR') and bill_id.startswith('CACR'):
-            bill_type = 'constitutional amendment'
-        elif expanded_bill_id.startswith('SSSB') or expanded_bill_id.startswith('SSHB'):
-            # special session house/senate bills
-            bill_type = 'bill'
-        else:
-            print(expanded_bill_id)
-            print(re.split('/\d+/', expanded_bill_id))
-            bill_type = bill_type_map[re.split('\d+', expanded_bill_id)[0][1:]]
-        return bill_type
-
-    # bill requests follow a different format in the bulk data
-    def scrape_prefiles(self, session):
-        for line in self.get('http://gencourt.state.nh.us/dynamicdatafiles/LsrsOnly.txt') \
-                        .content.decode('utf-8').split("\n"):
-            if len(line) < 1:
-                continue
-            # a few blank/irregular lines, irritating
-            if '|' not in line:
-                continue
-
-            line = line.split('|')
-
-            bill_id = line[5]
-
-            if not bill_id:
-                continue
-
-            title = line[7]
-            body = line[6]
-            lsr = line[1].strip()
-
-            chamber = 'lower' if body == 'H' else 'upper'
-            # there's an edge case where the two columns of bill ids provided in Lsrs.txt
-            # don't match types, which doesn't seem to occur with prefiles.
-            # so we can just pass bill id for both args
-            bill_type = self.classify_bill_type(bill_id, bill_id)
-
-            self.bills[lsr] = Bill(legislative_session=session,
-                                    chamber=chamber,
-                                    identifier=bill_id,
-                                    title=title,
-                                    classification=bill_type)
-
-            print(self.bills[lsr])
-
-            self.bills[lsr].extras['LSR'] = lsr
-
     def add_source(self, bill, lsr, session):
         bill_url = 'http://www.gencourt.state.nh.us/bill_Status/bill_status.aspx?' + \
                    'lsr={}&sy={}&sortoption=&txtsessionyear={}'.format(lsr, session, session)
         bill.add_source(bill_url)
 
-    def scrape_version_ids(self):
+    def add_sponsors(self, session):
+        # sponsors
+        for line in self.get('http://gencourt.state.nh.us/dynamicdatafiles/LsrSponsors.txt') \
+                        .content.decode('utf-8').split("\n"):
+            if len(line) < 1:
+                continue
 
+            session_yr, lsr, _seq, employee, primary = line.strip().split('|')
+
+            if session_yr == session and lsr in self.bills:
+                sp_type = 'primary' if primary == '1' else 'cosponsor'
+                try:
+                    self.bills[lsr].add_sponsorship(classification=sp_type,
+                                                    name=self.legislators[employee]['name'],
+                                                    entity_type='person',
+                                                    primary=True if sp_type == 'primary'
+                                                    else False)
+                    self.bills[lsr].extras = {'_code': self.legislators[employee]['seat']}
+                except KeyError:
+                    self.warning("Error, can't find person %s" % employee)
+
+    def scrape_version_ids(self):
         for line in self.get('http://gencourt.state.nh.us/dynamicdatafiles/LsrsOnly.txt') \
                         .content.decode('utf-8').split("\n"):
             if len(line) < 1:
