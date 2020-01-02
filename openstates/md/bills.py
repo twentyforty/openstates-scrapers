@@ -1,6 +1,5 @@
 import re
 import datetime
-import pytz
 
 import lxml.html
 from pupa.scrape import Scraper, Bill, VoteEvent
@@ -52,7 +51,6 @@ def _classify_action(action):
     return (None, ctty)
 
 class MDBillScraper(Scraper):
-    _TZ = pytz.timezone("US/Eastern")
     BASE_URL = 'http://mgaleg.maryland.gov/mgawebsite/'
     CHAMBERS = {'upper': 'senate', 'lower': 'house'}
 
@@ -393,7 +391,6 @@ class MDBillScraper(Scraper):
             if len(potential_chamber) > 0:
                 chamber = chamber_map[potential_chamber[0].strip()]
                 action_date = row.xpath('td[2]/text()')[0].strip()
-                # self._TZ.localize(
                 action_date = datetime.datetime.strptime(action_date, "%m/%d/%Y")
                 action_text = row.xpath('td[4]/text()')[0].strip()
                 atype, committee = _classify_action(action_text)
@@ -411,6 +408,7 @@ class MDBillScraper(Scraper):
                 )
                 print(action_text, action_date.strftime("%Y-%m-%d"))
             elif row.xpath('td[4]/a'):
+                # versions and votes have a link in the 4th column
                 link = row.xpath('td[4]/a')[0]
                 link_text = link.text_content().strip()
                 if link_text.startswith('Text'):
@@ -479,7 +477,19 @@ class MDBillScraper(Scraper):
         self.scrape_bill_sponsors(bill, page)
         self.scrape_bill_actions(bill, page)
 
-        # fiscal note
+        summary = page.xpath('//dt[contains(text(), "Synopsis")]/following-sibling::dd[1]/text()')[0].strip()
+        bill.add_abstract(summary, "summary")
+
+        # companions
+        companion_div = page.xpath('//div[@class="col-sm-12" and contains(text(), "Cross-filed")]/a/text()')
+        if len(companion_div) > 0:
+            bill.add_related_bill(
+                companion_div[0].strip(),
+                legislative_session=session,
+                relation_type="companion",
+            )
+
+        # fiscal notes
         if page.xpath('//dt[contains(text(), "Analysis")]/following-sibling::dd[1]/a'):
             fiscal_note = page.xpath('//dt[contains(text(), "Title")]/following-sibling::dd[1]/a')[0]
             fiscal_url = fiscal_note.get('href')
@@ -489,12 +499,6 @@ class MDBillScraper(Scraper):
                 fiscal_url,
                 media_type="application/pdf",
             )
-
-        # # documents
-        # self.scrape_documents(bill, doc)
-        # # actions
-        # self.scrape_actions(bill, url.replace("stab=01", "stab=03"))
-        # yield from self.parse_bill_votes_new(doc, bill)
         yield bill
 
     def scrape_documents(self, bill, doc):
