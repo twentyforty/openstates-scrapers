@@ -3,7 +3,7 @@ import pytz
 import datetime
 import collections
 import logging
-
+import sys
 from itertools import tee
 from spatula import Page, Spatula
 from pupa.scrape import Scraper, Bill, VoteEvent
@@ -74,8 +74,11 @@ class BillListPage(Page, Spatula):
     def handle_page(self):
         bills = self.doc.xpath('//ul[@class="linkSect"]/li')
         for bill in bills:
-            link = bill.getchildren()[0]
-            bill_id = str(link.text_content())
+            # link = bill.getchildren()[0]
+            # bill_id = str(link.text_content())
+
+            link = {'href': 'http://lis.virginia.gov/cgi-bin/legp604.exe?201+sum+SB268'}
+            bill_id = 'SB 268'
 
             if not bill_id.startswith(("S", "H")):
                 continue
@@ -101,9 +104,10 @@ class BillListPage(Page, Spatula):
 
             list(self.scrape_page_items(BillSponsorPage, url=sponsor_url, obj=bill))
             yield from self.scrape_page_items(BillDetailPage, url=bill_url, obj=bill)
-            bill.subject = self.kwargs["subjects"][bill_id]
+            # bill.subject = self.kwargs["subjects"][bill_id]
             bill.add_source(bill_url)
             yield bill
+            sys.exit()
 
         next_url = self.doc.xpath('//a/b[text()="More..."]/../@href')
         if next_url:
@@ -203,12 +207,19 @@ class BillDetailPage(Page, Spatula):
 
         # actions
         seen_next = False
+
+        for row in self.doc.xpath('//h4[text()="HISTORY"]/following-sibling::ul[1]/li'):
+            print("ROW: {}".format(row.xpath('string(.)')))
+
         for ali, next_ali in pairwise(self.doc.xpath('//h4[text()="HISTORY"]/following-sibling::ul[1]/li')):
             # If we've used this action text before, we don't need to parse it again
             if seen_next:
                 seen_next = False
+                print("SEEN NEXT")
                 continue
             date, action = ali.text_content().split(u" \xa0")
+            print("TEST:")
+            print(date, action)
             try:
                 actor, action = action.split(": ", 1)
             except ValueError:
@@ -311,7 +322,10 @@ class BillDetailPage(Page, Spatula):
 
             # if matched a 'None' atype, don't add the action
             if atype != SKIP:
+                print(action, date)
                 self.obj.add_action(action, date, chamber=actor, classification=atype)
+            else:
+                print("SKIPPING {}".format(action))
 
 
 class VotePage(Page):
@@ -386,7 +400,7 @@ def add_pupa_id(vote):
 def pairwise(list_of_items):
     """ allow looking ahead in a list of items """
     a, b = tee(list_of_items)
-    next(b, None)
+    # next(b, None)
     return zip(a, b)
 
 
@@ -398,7 +412,8 @@ class VaBillScraper(Scraper, Spatula):
         session_id = SESSION_SITE_IDS[session]
         url = BASE_URL + URL_PATTERNS["list"].format(session_id)
         subject_url = BASE_URL + URL_PATTERNS["subjects"].format(session_id)
-        subjects = self.scrape_page(SubjectPage, url=subject_url)
+        # subjects = self.scrape_page(SubjectPage, url=subject_url)
+        subjects = []
         yield from self.scrape_page_items(
             BillListPage,
             url=url,
