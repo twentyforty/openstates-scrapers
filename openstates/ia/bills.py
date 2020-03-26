@@ -6,6 +6,29 @@ from pupa.scrape import Scraper, Bill
 
 
 class IABillScraper(Scraper):
+
+    _action_classifiers = (
+        (r"introduced (.*) referred to", ["introduction","referral-committee"]),
+        (r"introduced", "introduction"),
+        (r"Read first time", "reading-1"),
+        (r"referred to", "referral-committee"),
+        (r"Sent to Governor", "executive-receipt"),        
+        (r"[Reported ]?Signed by Governor", "executive-signature"),
+        (r"Vetoed by Governor", "executive-veto"),
+        (r"Item veto", "executive-veto-line-item"),
+        (r"Passed (House|Senate)", "passage"),
+        (r"Amendment (S|H)-\d+ filed (.*)adopted", ["amendment-introduction", "amendment-passage"]),
+        (r"Amendment (S|H)-\d+ (.*)adopted", "amendment-passage"),
+        (r"Amendment (S|H)-\d+ filed", "amendment-introduction"),
+        (r"Amendment (S|H)-\d+( as amended,)? adopted", "amendment-passage"),
+        (r"Amendment (S|N)-\d+ lost", "amendment-failure"),
+        (r"Resolution filed", "introduction"),
+        (r"Resolution adopted", "passage"),
+        (r"Committee report (.*) passage\.", "committee-passage"),
+        (r"Committee report (.*) approving\.", "committee-passage"),
+        (r"Withdrawn", "withdrawal"),
+    )
+
     def scrape(self, session=None, chamber=None):
         if not session:
             session = self.latest_session()
@@ -236,44 +259,7 @@ class IABillScraper(Scraper):
 
             action = re.sub(r"(H|S)\.J\.\s+\d+\.$", "", action).strip()
 
-            if action.startswith("Introduced"):
-                atype = ["introduction"]
-                if ", referred to" in action:
-                    atype.append("referral-committee")
-            elif action.startswith("Read first time"):
-                atype = "reading-1"
-            elif action.startswith("Referred to"):
-                atype = "referral-committee"
-            elif action.startswith("Sent to Governor"):
-                atype = "executive-receipt"
-            elif action.startswith("Reported Signed by Governor"):
-                atype = "executive-signature"
-            elif action.startswith("Signed by Governor"):
-                atype = "executive-signature"
-            elif action.startswith("Vetoed by Governor"):
-                atype = "executive-veto"
-            elif action.startswith("Item veto"):
-                atype = "executive-veto-line-item"
-            elif re.match(r"Passed (House|Senate)", action):
-                atype = "passage"
-            elif re.match(r"Amendment (S|H)-\d+ filed", action):
-                atype = ["amendment-introduction"]
-                if ", adopted" in action:
-                    atype.append("amendment-passage")
-            elif re.match(r"Amendment (S|H)-\d+( as amended,)? adopted", action):
-                atype = "amendment-passage"
-            elif re.match(r"Amendment (S|N)-\d+ lost", action):
-                atype = "amendment-failure"
-            elif action.startswith("Resolution filed"):
-                atype = "introduction"
-            elif action.startswith("Resolution adopted"):
-                atype = "passage"
-            elif action.startswith("Committee report") and action.endswith("passage."):
-                atype = "committee-passage"
-            elif action.startswith("Withdrawn"):
-                atype = "withdrawal"
-            else:
-                atype = None
+            atype = self.classify_action(action)
 
             if action.strip() == "":
                 continue
@@ -298,3 +284,9 @@ class IABillScraper(Scraper):
             "2017-2018": "87",
             "2019-2020": "88",
         }[session]
+
+    def classify_action(self, action):
+        for regex, classification in self._action_classifiers:
+            if re.match(regex, action, re.IGNORECASE):
+                return classification
+        return None
