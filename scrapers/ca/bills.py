@@ -304,6 +304,59 @@ class CABillScraper(Scraper, LXMLMixin):
             legislative_session=session,
         )
 
+        self.scrape_sponsors(bill, page)
+        self.scrape_cosponsors(bill, page)
+
+        thirtyfirst = page.xpath('//span[@id="day"]/text()')[0].strip()
+        bill.extras['thirty_first_day'] = thirtyfirst
+
         bill.add_source(url)
 
         yield bill
+
+    def scrape_sponsors(self, bill, page):
+        sponsors_line = page.xpath('//span[@id="leadAuthors"]/text()')[0].strip()
+        if sponsors_line == '-':
+            return
+        
+        sponsors = sponsors_line.split(',')
+        for sponsor in sponsors:
+            self.add_sponsor(bill, sponsor, primary=True)
+    
+    def scrape_cosponsors(self, bill, page):
+        xpaths = [
+            '//span[@id="leadAuthors"]/text()',
+            '//span[@id="coAuthors"]/text()'
+        ]
+
+        for xpath in xpaths:
+            sponsors_line = page.xpath('//span[@id="leadAuthors"]/text()')[0].strip()
+            if sponsors_line == '-':
+                continue  
+
+            sponsors = sponsors_line.split(',')
+            for sponsor in sponsors:
+                self.add_sponsor(bill, sponsor, primary=False)
+
+        # if both principal coauthors and coauthors are -, just return
+        return
+
+
+    def add_sponsor(self, bill, sponsor, primary=False):
+        chamber = None
+        sponsor = sponsor.strip()
+
+        # TODO: can we have a from org in sponsor?
+        if sponsor.endswith('(A)'):
+            chamber = 'lower'
+            sponsor = sponsor.replace('(A)', '').strip()
+        elif sponsor.endswith('(S)'):
+            chamber = 'upper'
+            sponsor = sponsor.replace('(A)', '').strip()
+
+        bill.add_sponsorship(
+            sponsor,
+            entity_type="person",
+            classification="primary" if primary else "cosponsor",
+            primary=primary,
+        )
