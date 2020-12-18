@@ -9,6 +9,7 @@ _categorizer_rules = (
             r"(?P<no_votes>\d+)\.( Page \S+\.)?\)"
         )
     ),
+    Rule(r"From printer", "filing"),
     Rule(r"^Introduced", "introduction"),
     Rule(r"(?i)Referred to (?P<committees>.+)", "referral-committee"),
     Rule(r"(?i)Referred to (?P<committees>.+?)(\.\s+suspense)", "referral-committee"),

@@ -274,7 +274,7 @@ class CABillScraper(Scraper, LXMLMixin):
             #     yield from self.scrape_bill_type(chamber, session, type_, abbr)
 
         # todo: be nice to break this up by type, but adv search results paginate
-        url = 'http://leginfo.legislature.ca.gov/faces/billSearchClient.xhtml?session_year=20192020&house=Both&author=All&lawCode=All'
+        url = 'http://leginfo.legislature.ca.gov/faces/billSearchClient.xhtml?session_year={}&house=Both&author=All&lawCode=All'.format(session)
         page = self.get(url).content
         page = lxml.html.fromstring(page)
         page.make_links_absolute(url)
@@ -304,8 +304,15 @@ class CABillScraper(Scraper, LXMLMixin):
             legislative_session=session,
         )
 
+        internal_id = page.xpath('//input[@id="bid"]/@value')[0]
+
+        abstract = page.xpath('//span[@id="statusTitle"]/text()')[0].strip()
+        bill.add_abstract(abstract, "summary")
+
+        self.scrape_actions(bill, chamber, internal_id)
         self.scrape_sponsors(bill, page)
         self.scrape_cosponsors(bill, page)
+        self.scrape_versions(bill, internal_id, page)
 
         thirtyfirst = page.xpath('//span[@id="day"]/text()')[0].strip()
         bill.extras['thirty_first_day'] = thirtyfirst
@@ -313,6 +320,36 @@ class CABillScraper(Scraper, LXMLMixin):
         bill.add_source(url)
 
         yield bill
+
+    def scrape_actions(self, bill, chamber, internal_id):
+        url = 'http://leginfo.legislature.ca.gov/faces/billHistoryClient.xhtml?bill_id={}'
+        url = url.format(internal_id)
+        page = self.get(url).content
+        page = lxml.html.fromstring(page)
+        page.make_links_absolute(url)
+
+        current_chamber = chamber
+        for row in page.xpath('//table[@id="billhistory"]/tbody/tr'):
+            action_date = row.xpath('td[1]/text()')[0].strip()
+            action_text = row.xpath('td[2]/text()')[0].strip()
+
+            when = datetime.datetime.strptime(action_date, "%m/%d/%y")
+            when = self._tz.localize(when)
+
+            if 'in senate' in action_text.lower():
+                current_chamber = 'upper'
+            elif 'in assembly' in action_text.lower():
+                current_chamber = 'lower'
+            elif 'by the governor' in action_text.lower():
+                current_chamber = 'executive'
+
+            bill.add_action(
+                action_text,
+                chamber=current_chamber,
+                date=when,
+                classification=self.categorizer.categorize(action_text)['classification']
+            )
+
 
     def scrape_sponsors(self, bill, page):
         sponsors_line = page.xpath('//span[@id="leadAuthors"]/text()')[0].strip()
@@ -341,6 +378,28 @@ class CABillScraper(Scraper, LXMLMixin):
         # if both principal coauthors and coauthors are -, just return
         return
 
+    def scrape_versions(self, bill, internal_id, page):
+        for row in page.xpath('//select[@id="version"]/option'):
+            version_id = row.xpath('@value')[0]
+            version_name = row.xpath('text()')[0]
+
+            # note, there's no way to GET a text/html url for the specific version,
+            # you have to do a POST request w/ their form.
+            
+            # the pdf url is actually a JS redirect that submits a form.
+            # so if you want to download the files programatically you'll have to write your own logic.
+
+            # see http://leginfo.legislature.ca.gov/faces/feedbackDetail.xhtml?primaryFeedbackId=prim1603215435573
+
+            pdf_url = 'http://leginfo.legislature.ca.gov/faces/billPdf.xhtml?bill_id={}&version={}'
+
+            print(pdf_url.format(internal_id, version_id))
+
+            bill.add_version_link(
+                version_name,
+                pdf_url.format(internal_id, version_id),
+                media_type="application/pdf"
+            )
 
     def add_sponsor(self, bill, sponsor, primary=False):
         chamber = None
