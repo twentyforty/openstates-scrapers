@@ -177,6 +177,8 @@ class CABillScraper(Scraper, LXMLMixin):
 
     _tz = pytz.timezone("US/Pacific")
 
+    base_url = 'https://leginfo.legislature.ca.gov/faces'
+
 
     def clean_id(self, s):
         s = s.replace('-', ' ')
@@ -313,6 +315,7 @@ class CABillScraper(Scraper, LXMLMixin):
         self.scrape_sponsors(bill, page)
         self.scrape_cosponsors(bill, page)
         self.scrape_versions(bill, internal_id, page)
+        yield from self.scrape_votes(bill, internal_id)
 
         thirtyfirst = page.xpath('//span[@id="day"]/text()')[0].strip()
         bill.extras['thirty_first_day'] = thirtyfirst
@@ -322,8 +325,7 @@ class CABillScraper(Scraper, LXMLMixin):
         yield bill
 
     def scrape_actions(self, bill, chamber, internal_id):
-        url = 'http://leginfo.legislature.ca.gov/faces/billHistoryClient.xhtml?bill_id={}'
-        url = url.format(internal_id)
+        url = '{}/billHistoryClient.xhtml?bill_id={}'.format(self.base_url, internal_id)
         page = self.get(url).content
         page = lxml.html.fromstring(page)
         page.make_links_absolute(url)
@@ -391,15 +393,68 @@ class CABillScraper(Scraper, LXMLMixin):
 
             # see http://leginfo.legislature.ca.gov/faces/feedbackDetail.xhtml?primaryFeedbackId=prim1603215435573
 
-            pdf_url = 'http://leginfo.legislature.ca.gov/faces/billPdf.xhtml?bill_id={}&version={}'
-
-            print(pdf_url.format(internal_id, version_id))
+            pdf_url = '{}/billPdf.xhtml?bill_id={}&version={}'
 
             bill.add_version_link(
                 version_name,
-                pdf_url.format(internal_id, version_id),
+                pdf_url.format(self.base_url, internal_id, version_id),
                 media_type="application/pdf"
             )
+
+    def scrape_votes(self, bill, internal_id):
+        url = '{}/billVotesClient.xhtml?bill_id={}'.format(self.base_url, internal_id)
+        page = self.get(url).content
+        page = lxml.html.fromstring(page)
+        page.make_links_absolute(url)
+        
+        for row in page.xpath('//div[@class="status"]'):
+            vote_date = row.xpath('.//span[contains(@id, ":voteDate")]/text()')[0].strip()
+            vote_date = datetime.datetime.strptime(vote_date, "%m/%d/%y")
+            vote_date = self._tz.localize(vote_date)
+            
+            
+            vote_res = row.xpath('.//span[contains(@id, ":result")]/text()')[0].strip()
+            vote_loc = row.xpath('.//span[contains(@id, ":location")]/text()')[0].strip()
+
+            vote_chamber = 'lower' if ('assembly' in vote_loc.lower() or 'asm' in vote_loc.lower()) else 'upper'
+
+            vote_motion = row.xpath('.//span[contains(@id, ":motion")]/text()')[0].strip()
+
+            # lxml doesn't support ends-with here instead of contains, so be cautious of
+            # :ayes vs :ayesLeg
+            vote_yes = int(row.xpath('.//span[contains(@id, ":ayes")]/text()')[0].strip())
+            vote_no = int(row.xpath('.//span[contains(@id, ":noes")]/text()')[0].strip())
+            vote_other = int(row.xpath('.//span[contains(@id, ":nvr")]/text()')[0].strip())
+
+            vote = VoteEvent(
+                chamber=vote_chamber,
+                start_date=vote_date,
+                motion_text=vote_motion,
+                result="pass" if 'pass' in vote_res.lower() else "fail",
+                classification="passage",
+                bill=bill,
+            )
+            vote.set_count("yes", vote_yes)
+            vote.set_count("no", vote_no)
+            vote.set_count("other", vote_other)
+            vote.add_source(url)
+
+            ayes = row.xpath('.//span[contains(@id, ":ayesLeg")]/text()')
+            self.parse_vote_row(vote, ayes, 'yes')
+            noes = row.xpath('.//span[contains(@id, ":noesLeg")]/text()')
+            self.parse_vote_row(vote, noes, 'no')
+            nots = row.xpath('.//span[contains(@id, ":nvrLeg")]/text()')
+            self.parse_vote_row(vote, nots, 'not voting')
+
+            yield vote
+
+    def parse_vote_row(self, vote, row, vote_val):
+        if row:
+            rolls = row[0].strip()
+            if rolls != '':
+                for rollcall in rolls.split(','):
+                    vote.vote(vote_val, rollcall.strip())
+
 
     def add_sponsor(self, bill, sponsor, primary=False):
         chamber = None
