@@ -143,6 +143,7 @@ class Florida(State):
     ]
     ignored_scraped_sessions = [
         *(str(each) for each in range(1997, 2010)),
+        "2020 Org.",
         "2019 I",  # Empty, maybe informational session
         "2010",
         "2010A",
@@ -187,6 +188,7 @@ class Florida(State):
     def get_session_list(self):
         # from https://stackoverflow.com/questions/38015537/python-requests-exceptions-sslerror-dh-key-too-small
         import requests
+
         requests.packages.urllib3.disable_warnings()
         requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += ":HIGH:!DH:!aNULL"
         return url_xpath("http://flsenate.gov", "//option/text()")
