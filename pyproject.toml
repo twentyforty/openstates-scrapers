@@ -6,6 +6,7 @@ authors = ["James Turk <dev@jamesturk.net>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
+openstates = { git = "https://github.com/twentyforty/openstates-core.git", branch = "main"}
 xlrd = "<2"
 lxml = "^4.4"
 pytz = "^2024.1"
