@@ -9,6 +9,40 @@ from utils import LXMLMixin
 
 
 class VTBillScraper(Scraper, LXMLMixin):
+
+    # Dictionary matching bill action phrases to classifications
+    _actions = {
+        "signed by governor": ["executive-signature"],
+        "become law without signature of governor": ["became-law", "executive"],
+        "vetoed by the governor": ["executive-veto"],
+        "read first": ["introduction"],
+        "read 1st time": ["introduction"],
+        "first read": ["introduction"],
+        "reported favorably": ["committee-passage-favorable"],
+        "read second": ["reading-2"],
+        "read 2nd": ["reading-2"],
+        "second read": ["reading-2"],
+        "read third": ["reading-3"],
+        "read 3rd": ["reading-3"],
+        "third read": ["reading-3"],
+        "rules suspended & messaged to house forthwith": ["passage"],
+        "overrid": ["veto-override-passage"],
+        "delivered to governor": ["executive-receipt"],
+        "vetoed": ["executive-veto"],
+        "governor allowed to become law": ["became-law"],
+        "allowed to go into effect without the signature of the governor": [
+            "became-law"
+        ],
+        "proposal of amendment": ["amendment-introduction"],
+    }
+
+    def categorize_actions(self, action_string):
+        for action_key in list(self._actions):
+            # If we can detect a phrase that we have mapped an action classification for
+            if action_key in action_string:
+                return self._actions[action_key]
+        return None
+
     def scrape(self, session=None):
         HTML_TAGS_RE = r"<.*?>"
 
@@ -200,21 +234,18 @@ class VTBillScraper(Scraper, LXMLMixin):
                     raise AssertionError("Unknown actor for bill action")
 
                 # Categorize action
-                action_classification = actions.categorize_actions(
+                action_classification = self.categorize_actions(
                     action["FullStatus"].lower()
                 )
 
                 # If both an action type and actor were assigned
                 if action_classification:
-                    action_type = action_classification
+                    action_type = action_classification[0]
 
-                    # if len(action_classification) > 1:
-                    # actor = action_classification[1]
+                    if len(action_classification) > 1:
+                        actor = action_classification[1]
 
-                # More action categorization
-                # These classifications are done separately because they require more rules
-                # in order to correctly classify
-
+                # More action categorization (these were the tricky ones)
                 elif actor == "lower" and any(
                     x.lower().startswith("aspassed")
                     for x in action["keywords"].split(";")
@@ -240,12 +271,6 @@ class VTBillScraper(Scraper, LXMLMixin):
                     and "passed" not in action["FullStatus"].lower()
                 ):
                     action_type = "amendment-introduction"
-
-                elif (
-                    "become law without signature of governor"
-                    in action["FullStatus"].lower()
-                ):
-                    actor = "executive"
 
                 else:
                     action_type = None
