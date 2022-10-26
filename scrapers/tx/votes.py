@@ -335,8 +335,14 @@ class TXVoteScraper(Scraper):
             self.warning("no journals for session 821")
             return
 
+        upper_journal_session_id = None
         if len(session) == 2:
             session = "%sR" % session
+            upper_journal_session_id = f"{session}SJ"
+            lower_journal_session_id = session
+        else:
+            upper_journal_session_id = f"{session[:2]}S{session[2:]}"
+            lower_journal_session_id = f"{session[:2]}C{session[2:]}"
 
         chambers = [chamber] if chamber else ["upper", "lower"]
 
@@ -348,14 +354,18 @@ class TXVoteScraper(Scraper):
         day_num = 1
         while journal_day <= today:
             if "lower" in chambers:
+                '''https://journals.house.texas.gov/HJRNL/873/HTML/87C3DAY01FINAL.HTM'''
+                
                 journal_root = (
                     "https://journals.house.texas.gov/HJRNL/%s/HTML/" % session
                 )
-                journal_url = (
-                    journal_root + session + "DAY" + str(day_num).zfill(2) + "FINAL.HTM"
+                journal_url = journal_root + "%sDAY%sFINAL.HTM" % (
+                    lower_journal_session_id,
+                    str(day_num).zfill(2)
                 )
                 try:
                     self.get(journal_url)
+                    print('200: %s' % journal_url)
                 except scrapelib.HTTPError:
                     pass
                 else:
@@ -365,13 +375,14 @@ class TXVoteScraper(Scraper):
                 journal_root = (
                     "https://journals.senate.texas.gov/SJRNL/%s/HTML/" % session
                 )
-                journal_url = journal_root + "%sSJ%s-%s-F.HTM" % (
-                    session,
+                journal_url = journal_root + "%s%s-%s-F.HTM" % (
+                    upper_journal_session_id,
                     str(journal_day.month).zfill(2),
                     str(journal_day.day).zfill(2),
                 )
                 try:
                     self.get(journal_url)
+                    print('200: %s' % journal_url)
                 except scrapelib.HTTPError:
                     pass
                 else:
