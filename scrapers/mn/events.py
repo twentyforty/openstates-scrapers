@@ -123,7 +123,11 @@ class MNEventScraper(Scraper, LXMLMixin):
                 # they always 404.
                 if doc_url.endswith(".msg"):
                     continue
-                media_type = get_media_type(doc_url, default="docx")
+                if doc_url.endswith(".docx"):
+                    media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                else:
+                    media_type = get_media_type(doc_url)
+
                 event.add_document(
                     doc_name, doc_url, media_type=media_type, on_duplicate="ignore"
                 )
