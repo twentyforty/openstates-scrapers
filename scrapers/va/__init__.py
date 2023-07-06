@@ -191,8 +191,6 @@ class Virginia(State):
         },
         {
             "_scraped_name": "2023 Session",
-            # TODO: remove classification when more than bills, histories, & votes posted
-            "classification": "special",
             "identifier": "2023",
             "name": "2023 Regular Session",
             "start_date": "2023-01-11",
