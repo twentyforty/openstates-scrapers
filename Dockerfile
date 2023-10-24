@@ -56,6 +56,8 @@ RUN poetry install \
     && rm -rf /var/lib/apt/lists/*
 
 ENV OPENSSL_CONF=/opt/openstates/openstates/openssl.cnf
+ENV GOOGLE_CLOUD_PROJECT civiqa-301113
+ENV SETTINGS_NAME django_settings
 
 # Entrypoint enables proper support of Google Application Credentials as env variable
 COPY docker_entrypoint.sh /opt/openstates/entrypoint.sh
