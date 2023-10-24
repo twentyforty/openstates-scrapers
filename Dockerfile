@@ -56,5 +56,7 @@ RUN poetry install \
     && rm -rf /var/lib/apt/lists/*
 
 ENV OPENSSL_CONF=/opt/openstates/openstates/openssl.cnf
+ENV GOOGLE_CLOUD_PROJECT civiqa-301113
+ENV SETTINGS_NAME django_settings
 
 ENTRYPOINT ["poetry", "run", "os-update"]
