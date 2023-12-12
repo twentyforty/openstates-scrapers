@@ -56,9 +56,12 @@ RUN poetry install \
     && rm -rf /var/lib/apt/lists/*
 
 ENV OPENSSL_CONF=/opt/openstates/openstates/openssl.cnf
-ENV GOOGLE_CLOUD_PROJECT civiqa-301113
-ENV SETTINGS_NAME django_settings
-
-# Entrypoint enables proper support of Google Application Credentials as env variable
-COPY docker_entrypoint.sh /opt/openstates/entrypoint.sh
-ENTRYPOINT ["/bin/bash", "/opt/openstates/entrypoint.sh"]
+ENV GOOGLE_CLOUD_PROJECT="civiqa-301113"
+ENV SETTINGS_NAME="django_settings"
+ENV DATABASE_URL="postgres://pgbouncer:42571allahis1@34.118.205.29:5432/civiqa-sql-db-1"
+ENV VIRGINIA_FTP_USER aibrahim
+ENV VIRGINIA_FTP_PASSWORD "AMXKa3Waws!XXHBirQk"
+ENV NEW_YORK_API_KEY "4JRIFodoL0g6StkCPOLyu4pakrUhLdm8"
+ENV DC_API_KEY "70d08774-9ba1-4108-80ce-248a3454b08b"
+ENV VERIFY_CERTS="False"
+ENTRYPOINT ["poetry", "run", "os-update"]
