@@ -7,3 +7,4 @@ _cache
 pubinfo_*
 openstates-postgres/
 vm_data/
+.venv
