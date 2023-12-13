@@ -55,6 +55,7 @@ RUN poetry install \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+ENV ENVIRONMENT=prod
 ENV OPENSSL_CONF=/opt/openstates/openstates/openssl.cnf
 ENV GOOGLE_CLOUD_PROJECT="civiqa-301113"
 ENV SETTINGS_NAME="django_settings"
