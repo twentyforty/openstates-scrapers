@@ -592,22 +592,6 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
-name = "django-admin-extra-buttons"
-version = "1.5.7"
-description = "Django mixin to easily add buttons to any ModelAdmin"
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "django-admin-extra-buttons-1.5.7.tar.gz", hash = "sha256:08dd070cbd46dfe1cb46d7676495a943860e68f99bac85ab5b164cbeb5e73dae"},
-]
-
-[package.extras]
-dev = ["autopep8", "bump2version", "check-manifest", "django", "flake8", "isort", "pep8", "pip-tools", "readme", "sphinx", "wheel"]
-docs = ["markdown-include", "mdx_gh_links", "mkdocs", "mkdocs-material", "mkdocs-material"]
-test = ["coverage", "django_webtest", "factory-boy", "pdbpp", "pyquery", "pytest", "pytest-cov", "pytest-django", "pytest-echo", "tox (>=2.3)", "wheel"]
-
-[[package]]
 name = "docx2txt"
 version = "0.8"
 description = "A pure python-based utility to extract text and images from docx files."
@@ -1623,7 +1607,6 @@ chardet = "^3.0"
 click = "^8.0"
 dj_database_url = "^0.5.0"
 Django = "3.2.14"
-django-admin-extra-buttons = "^1.5.7"
 google-cloud-logging = "^3.9.0"
 google-cloud-pubsub = "^2.19.0"
 google-cloud-secret-manager = "^2.16.4"
@@ -1644,7 +1627,7 @@ us = "^3.1.1"
 type = "git"
 url = "https://github.com/twentyforty/openstates-core.git"
 reference = "main"
-resolved_reference = "ad58231245dcacf4e350950448d7d76595b0f889"
+resolved_reference = "356bf293ea07392cc1235ae6172e2f9cca7e5e36"
 
 [[package]]
 name = "paramiko"
