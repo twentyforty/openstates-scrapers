@@ -1,0 +1,14 @@
+timeout: 1200s
+steps:
+
+- id: preprocess-resources
+  name: gcr.io/civiqa-301113/envsubst
+  env: ["ENV=prod", "DATABASE_URL=postgres://pgbouncer:42571allahis1@34.118.205.29:5432/civiqa-sql-db-1"]
+  args: ["os-update-ca-cronjob.yaml"]
+
+- name: "gcr.io/cloud-builders/gke-deploy"
+  args:
+  - run
+  - --filename=os-update-ca-cronjob.yaml
+  - --location=us-central1
+  - --cluster=openstates-scapers

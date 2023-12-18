@@ -1,0 +1,9 @@
+timeout: 1200s
+steps:
+  # build container image
+- name: "gcr.io/cloud-builders/docker"
+  args: ["build", "-t", "gcr.io/civiqa-301113/openstates-scrapers-ca", "-f", "Dockerfile.california", "."]
+
+  # push container image
+- name: "gcr.io/cloud-builders/docker"
+  args: ["push", "gcr.io/civiqa-301113/openstates-scrapers-ca"]

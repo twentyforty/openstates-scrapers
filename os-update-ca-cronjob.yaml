@@ -1,0 +1,57 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  labels:
+    name: os-update-ca-cronjob-$ENV
+  name: os-update-ca-cronjob-$ENV
+  namespace: civiqa-scrape-prod-namespace
+spec:
+  schedule: "0 */3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 0 
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            name: os-update-ca-job-$ENV
+        spec:
+          serviceAccountName: civiqa-scrape-prod-ksa
+          restartPolicy: Never
+          shareProcessNamespace: true
+          containers:
+          - name: os-update-ca-app
+            image: gcr.io/civiqa-301113/openstates-scrapers-ca
+            command: ["/bin/bash"]
+            args:
+              - -c
+              - >-
+                  /opt/openstates/openstates/scrapers/ca/download.sh &&
+                  poetry run os-update ca &&
+                  pkill mariadb
+            env:
+            - name: DATABASE_URL
+              value: $DATABASE_URL
+            - name: MYSQL_HOST
+              value: "127.0.0.1"
+            lifecycle:
+              preStop:
+                exec:
+                  command:
+                    ["/bin/sh", "-c", "pkill mariadb && sleep 10"]
+            resources:
+              requests:
+                ephemeral-storage: "4Gi"
+              limits:
+                ephemeral-storage: "8Gi"
+
+          - name: mysql
+            image: mariadb:10.3
+            ports:
+            - containerPort: 3306
+              name: mysql
+            env:
+            - name: MYSQL_DATABASE
+              value: "capublic"
+            - name: MYSQL_ALLOW_EMPTY_PASSWORD
+              value: "yes"
