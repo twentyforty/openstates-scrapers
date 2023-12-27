@@ -1447,7 +1447,7 @@ us = "^3.1.1"
 type = "git"
 url = "https://github.com/twentyforty/openstates-core.git"
 reference = "main"
-resolved_reference = "f24e8398d0e7763750a2b6847431284584e28799"
+resolved_reference = "71399e95265fe160ad96889c584e0bba224d528b"
 
 [[package]]
 name = "paramiko"
