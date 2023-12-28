@@ -101,7 +101,7 @@ class Delaware(State):
             "name": "152nd General Assembly (2023-2024)",
             "start_date": "2022-01-10",
             "end_date": "2022-06-30",
-            "active": True,
+            "active": False,
         },
     ]
     ignored_scraped_sessions = [
