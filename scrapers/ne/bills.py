@@ -243,6 +243,7 @@ class NEBillScraper(Scraper, LXMLMixin):
             amendment_names = [name.strip() for name in amendment_names]
             amendment_name = " ".join(amendment_names)
             amendment_url = row.xpath(".//h6/a/@href")[0]
+
             # adopted amendments get added as versions, everything else goes into documents
             if "adopted" in status.lower():
                 bill.add_version_link(
