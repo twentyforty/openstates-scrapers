@@ -1444,10 +1444,8 @@ textract = "^1.6"
 us = "^3.1.1"
 
 [package.source]
-type = "git"
-url = "https://github.com/twentyforty/openstates-core.git"
-reference = "main"
-resolved_reference = "526cfe090899589d21e4f22d4d82fd3ef3f7706a"
+type = "directory"
+url = "../core"
 
 [[package]]
 name = "paramiko"
@@ -2641,4 +2639,4 @@ california = ["mysqlclient", "SQLAlchemy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "c5bd600023c87a2d7be50aad4cb55ace71fe2c50664185cd890269f40237b1b3"
+content-hash = "65f869c2d042e83eefd529c24f54d82553441a4dca9fdf59c15fe0de99ea842c"
