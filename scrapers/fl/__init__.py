@@ -212,15 +212,6 @@ class Florida(State):
             "active": False,
         },
         {
-            "name": "2023 Special Session C",
-            "identifier": "2023C",
-            "classification": "special",
-            "start_date": "2023-11-06",
-            # TODO: Update End Date
-            "end_date": "2023-12-31",
-            "active": True,
-        },
-        {
             "name": "2024 Regular Session",
             "identifier": "2024",
             "classification": "primary",
