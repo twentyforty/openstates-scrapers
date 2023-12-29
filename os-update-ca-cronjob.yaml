@@ -6,8 +6,8 @@ metadata:
   name: os-update-ca-cronjob-$ENV
   namespace: civiqa-scrape-prod-namespace
 spec:
-  schedule: "0 */3 * * *"
-  concurrencyPolicy: Forbid
+  schedule: "0 */2 * * *"
+  concurrencyPolicy: Replace
   successfulJobsHistoryLimit: 0 
   jobTemplate:
     spec:
