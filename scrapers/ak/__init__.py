@@ -8,7 +8,11 @@ settings = dict(SCRAPELIB_TIMEOUT=600)
 
 
 class Alaska(State):
-    scrapers = {"bills": AKBillScraper, "events": AKEventScraper}
+    scrapers = {
+        "bills": AKBillScraper,
+        "events": AKEventScraper,
+    }
+
     legislative_sessions = [
         {
             "_scraped_name": "28th Legislature (2013-2014)",

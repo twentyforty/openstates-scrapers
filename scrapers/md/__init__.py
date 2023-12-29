@@ -11,6 +11,7 @@ class Maryland(State):
         "events": MDEventScraper,
         "votes": MDVoteScraper,
     }
+    default_scrapers = ["bills", "votes"]
     legislative_sessions = [
         {
             "_scraped_name": "2007 Regular Session",

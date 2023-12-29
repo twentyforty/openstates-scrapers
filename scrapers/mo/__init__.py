@@ -11,6 +11,7 @@ class Missouri(State):
         # 'votes': MOVoteScraper,
         "events": MOEventScraper,
     }
+    default_scrapers = ["bills"] #, "votes"]
     legislative_sessions = [
         {
             "_scraped_name": "2019 Regular Session",

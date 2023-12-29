@@ -12,6 +12,7 @@ class Texas(State):
         "votes": TXVoteScraper,
         "events": TXEventScraper,
     }
+    default_scrapers = ["bills", "votes"]
     legislative_sessions = [
         {
             "_scraped_name": "81(R) - 2009",

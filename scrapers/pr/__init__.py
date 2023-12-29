@@ -12,6 +12,7 @@ class PuertoRico(State):
         "bills": PRBillScraper,
         "votes": PRVoteScraper,
     }
+    default_scrapers = ["bills", "votes"]
     legislative_sessions = [
         {
             "_scraped_name": "2009-2012",
