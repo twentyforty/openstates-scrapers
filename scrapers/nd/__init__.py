@@ -17,6 +17,7 @@ class NorthDakota(State):
         "bills": NDBillScraper,
         "events": NDEventScraper,
     }
+    default_scrapers = ["bills", "votes"]
     legislative_sessions = [
         {
             "_scraped_name": "62nd Legislative Assembly (2011-12)",

@@ -14,6 +14,7 @@ class Iowa(State):
         "votes": IAVoteScraper,
         "events": IAEventScraper,
     }
+    default_scrapers = ["bills", "votes"]
     legislative_sessions = [
         {
             "_scraped_name": "General Assembly: 84",

@@ -15,6 +15,7 @@ class UnitedStates(State):
         "bills": USBillScraper,
         # "votes": USVoteScraper,
     }
+    default_scrapers = ["bills", "votes"]
     legislative_sessions = [
         {
             "classification": "primary",
