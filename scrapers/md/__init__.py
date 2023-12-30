@@ -2,14 +2,14 @@ from utils import url_xpath
 from openstates.scrape import State
 from .bills import MDBillScraper
 from .events import MDEventScraper
-from .votes import MDVoteScraper
+# from .votes import MDVoteScraper
 
 
 class Maryland(State):
     scrapers = {
         "bills": MDBillScraper,
         "events": MDEventScraper,
-        "votes": MDVoteScraper,
+        #"votes": MDVoteScraper, VOte scraper fails. Bills scraper takes care of votes
     }
     default_scrapers = ["bills", "votes"]
     legislative_sessions = [
