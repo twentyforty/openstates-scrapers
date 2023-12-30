@@ -11,7 +11,7 @@ class Maryland(State):
         "events": MDEventScraper,
         #"votes": MDVoteScraper, VOte scraper fails. Bills scraper takes care of votes
     }
-    default_scrapers = ["bills", "votes"]
+    default_scrapers = ["bills"]
     legislative_sessions = [
         {
             "_scraped_name": "2007 Regular Session",
