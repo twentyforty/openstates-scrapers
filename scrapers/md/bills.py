@@ -346,7 +346,7 @@ class MDBillScraper(Scraper):
         ):
             bill.add_subject(row[0])
 
-    def scrape_bill_sponsors(self, bill, page):
+    def scrape_bill_sponsors(self, bill, page, chamber):
         sponsors = page.xpath(
             '//dt[contains(text(), "Sponsored by")]/following-sibling::dd[1]/a'
         )
@@ -368,6 +368,7 @@ class MDBillScraper(Scraper):
                 sponsor_type,
                 primary=sponsor_type == "primary",
                 entity_type=entity_type,
+                chamber=chamber,
             )
 
     def scrape_bill(self, chamber, session, url):
@@ -411,7 +412,7 @@ class MDBillScraper(Scraper):
         bill.add_source(url)
 
         self.scrape_bill_subjects(bill, page)
-        self.scrape_bill_sponsors(bill, page)
+        self.scrape_bill_sponsors(bill, page, chamber)
         self.scrape_bill_actions(bill, page)
 
         # fiscal note
