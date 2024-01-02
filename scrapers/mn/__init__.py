@@ -23,6 +23,7 @@ class Minnesota(State):
         "votes": MNVoteScraper,
         "events": MNEventScraper,
     }
+    default_scrapers = ["bills", "votes"]
     legislative_sessions = [
         {
             "_scraped_name": "86th Legislature, 2009-2010",
