@@ -1,6 +1,6 @@
 import cloudscraper
 import datetime
-import dateutil
+import dateutil.parser
 import lxml
 import pytz
 import re

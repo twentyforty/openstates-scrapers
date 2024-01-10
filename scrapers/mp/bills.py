@@ -1,5 +1,5 @@
 import cloudscraper
-import dateutil
+import dateutil.parser
 import lxml.html
 import pytz
 import re

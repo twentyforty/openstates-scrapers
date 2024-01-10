@@ -3,7 +3,7 @@ from openstates.scrape import Scraper, Bill, VoteEvent
 import scrapelib
 import pytz
 import re
-import dateutil
+import dateutil.parser
 
 BAD_BILLS = [("134", "SB 92")]
 

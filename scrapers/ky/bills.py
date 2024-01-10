@@ -1,4 +1,4 @@
-import dateutil
+import dateutil.parser
 import re
 import scrapelib
 import os
