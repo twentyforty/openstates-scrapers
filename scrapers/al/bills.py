@@ -3,7 +3,7 @@ import json
 import lxml
 import re
 import datetime
-import dateutil
+import dateutil.parser
 import requests
 from openstates.scrape import Scraper, Bill, VoteEvent
 from utils.media import get_media_type

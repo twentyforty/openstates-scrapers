@@ -6,7 +6,7 @@ from openstates.scrape import Scraper
 from openstates.scrape import Event
 from spatula import PdfPage, HtmlPage
 import datetime
-import dateutil
+
 
 TZ = pytz.timezone("US/Central")
 

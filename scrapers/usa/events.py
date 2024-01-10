@@ -1,7 +1,7 @@
 import pytz
 import lxml
 import datetime
-import dateutil
+import dateutil.parser
 import re
 import requests
 

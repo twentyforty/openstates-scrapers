@@ -2,7 +2,7 @@ from openstates.scrape import Scraper
 from openstates.scrape import Bill, VoteEvent
 import re
 import datetime
-import dateutil
+import dateutil.parser
 from collections import defaultdict
 import lxml.html
 from .actions import Categorizer
