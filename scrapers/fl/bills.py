@@ -158,7 +158,9 @@ class BillDetail(HtmlPage):
             sp = sp.strip()
             if sp:
                 sp_type = "organization" if "committee" in sp.lower() else "person"
-                self.input.add_sponsorship(sp, "primary", sp_type, True)
+                self.input.add_sponsorship(
+                    sp, "primary", sp_type, True, chamber=self.input.from_organization
+                )
 
         cosponsors = match.groupdict()["cosponsors"]
         if cosponsors:
@@ -170,7 +172,9 @@ class BillDetail(HtmlPage):
                     csp_type = (
                         "organization" if "committee" in csp.lower() else "person"
                     )
-                    self.input.add_sponsorship(csp, "cosponsor", csp_type, False)
+                    self.input.add_sponsorship(
+                        csp, "cosponsor", csp_type, False, chamber=self.input.from_organization
+                    )
 
     def process_summary(self):
         summary = self.root.xpath(
