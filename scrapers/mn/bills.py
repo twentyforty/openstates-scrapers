@@ -569,6 +569,7 @@ class MNBillScraper(Scraper, LXMLMixin):
                 classification=sponsor_type,
                 entity_type="person",
                 primary=is_primary,
+                chamber=chamber,
             )
 
         return bill
