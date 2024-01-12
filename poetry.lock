@@ -1493,7 +1493,7 @@ us = "^3.1.1"
 type = "git"
 url = "https://github.com/twentyforty/openstates-core.git"
 reference = "main"
-resolved_reference = "fda1cc296eb0a0044dbdd5cc7a9341f45ca89ced"
+resolved_reference = "1cafb2ac54c9c384c70906549cfc1fd06d2bfa3b"
 
 [[package]]
 name = "pandas"
