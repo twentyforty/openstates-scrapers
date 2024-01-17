@@ -404,6 +404,7 @@ class SCBillScraper(Scraper):
                 classification="primary",
                 primary=True,
                 entity_type="person",
+                chamber=chamber,
             )
         for sponsor in doc.xpath('//a[contains(@href, "committee.php")]/text()'):
             sponsor = sponsor.replace("\xa0", " ").strip()

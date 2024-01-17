@@ -232,7 +232,7 @@ class TNBillScraper(Scraper):
         sponsor = sponsor.replace("*", "").strip()
         if sponsor:
             bill.add_sponsorship(
-                sponsor, classification="primary", entity_type="person", primary=True
+                sponsor, classification="primary", entity_type="person", primary=True, chamber=primary_chamber
             )
 
         # bill text
