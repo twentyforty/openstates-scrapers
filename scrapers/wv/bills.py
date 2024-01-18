@@ -217,6 +217,7 @@ class WVBillScraper(Scraper):
                                 classification="cosponsor",
                                 entity_type="person",
                                 primary=False,
+                                chamber=chamber,
                             )
                     else:
                         bill.add_sponsorship(
@@ -224,6 +225,7 @@ class WVBillScraper(Scraper):
                             classification="cosponsor",
                             entity_type="person",
                             primary=False,
+                            chamber=chamber,
                         )
 
         for link in page.xpath("//a[contains(@href, 'votes/house')]"):
