@@ -216,7 +216,11 @@ class GABillScraper(Scraper):
                             name, district = vote_name_pattern.search(
                                 whom["Name"]
                             ).groups()
-                            vote.vote(methods.get(how, "other"), name, note=district)
+                            vote.vote(
+                                methods.get(how, "other"),
+                                name + ' ' + district,
+                                note=district,
+                            )
 
                     yield vote
 
