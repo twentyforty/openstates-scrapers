@@ -176,6 +176,7 @@ class IDBillScraper(Scraper):
                         entity_type="organization",
                         primary=True,
                         classification="primary",
+                        chamber=chamber,
                     )
                 else:
                     for person in _split(sponsors):
@@ -186,6 +187,7 @@ class IDBillScraper(Scraper):
                                 name=person,
                                 entity_type="person",
                                 primary=True,
+                                chamber=chamber,
                             )
 
         actor = chamber
@@ -265,7 +267,7 @@ class IDBillScraper(Scraper):
                         )
         yield bill
 
-    def get_names(self, name_text):
+    def get_names(self, name_text: str):
         """both of these are unicode non-breaking spaces"""
         if name_text:
             name_text = name_text.replace("\xa0--\xa0", "")
@@ -275,7 +277,7 @@ class IDBillScraper(Scraper):
                 for name in name_text.split(",")
                 if name
             ]
-            name_list = [name.split("(")[0] for name in name_list]
+            name_list = [name.replace("(", " ").replace(")", " ").strip() for name in name_list]
             return name_list
         return []
 
