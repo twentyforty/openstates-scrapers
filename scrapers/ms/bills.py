@@ -124,6 +124,7 @@ class MSBillScraper(Scraper):
                     classification=type,
                     entity_type="person",
                     primary=True,
+                    chamber=chamber,
                 )
 
             for author in details_root.xpath("//AUTHORS/ADDITIONAL"):
@@ -140,6 +141,7 @@ class MSBillScraper(Scraper):
                         classification=type,
                         entity_type="person",
                         primary=False,
+                        chamber=chamber,
                     )
             # Versions
             curr_version = details_root.xpath("string(//CURRENT_OTHER" ")").replace(

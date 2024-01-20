@@ -213,7 +213,7 @@ class TXBillScraper(Scraper, LXMLMixin):
         for author in root.findtext("authors").split(" | "):
             if re.search(r"\S+", author.strip()) is not None:
                 bill.add_sponsorship(
-                    author, classification="primary", entity_type="person", primary=True
+                    author, classification="primary", entity_type="person", primary=True, chamber=chamber,
                 )
         for coauthor in root.findtext("coauthors").split(" | "):
             if re.search(r"\S+", coauthor.strip()) is not None:
@@ -222,6 +222,7 @@ class TXBillScraper(Scraper, LXMLMixin):
                     classification="cosponsor",
                     entity_type="person",
                     primary=False,
+                    chamber=chamber,
                 )
         for sponsor in root.findtext("sponsors").split(" | "):
             if re.search(r"\S+", sponsor.strip()) is not None:
@@ -230,6 +231,7 @@ class TXBillScraper(Scraper, LXMLMixin):
                     classification="primary",
                     entity_type="person",
                     primary=True,
+                    chamber=chamber,
                 )
         for cosponsor in root.findtext("cosponsors").split(" | "):
             if re.search(r"\S+", cosponsor.strip()) is not None:
@@ -238,6 +240,7 @@ class TXBillScraper(Scraper, LXMLMixin):
                     classification="cosponsor",
                     entity_type="person",
                     primary=False,
+                    chamber=chamber,
                 )
 
         if root.findtext("companions"):
