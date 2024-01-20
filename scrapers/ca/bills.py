@@ -422,11 +422,19 @@ class CABillScraper(Scraper, LXMLMixin):
                 fsbill.add_title(title)
 
             for author in version.authors:
+                chamber = None
+                if author.house:
+                    house = author.house.lower()
+                    if house[0] == 'a':
+                        chamber = 'lower'
+                    elif house[0] == 's':
+                        chamber = 'upper'
                 fsbill.add_sponsorship(
                     author.name,
                     classification=SPONSOR_TYPES[author.contribution],
                     primary=author.primary_author_flg == "Y",
                     entity_type="person",
+                    chamber=chamber,
                 )
                 # fsbill.sponsorships[-1]['extras'] = {'official_type': author.contribution}
 
