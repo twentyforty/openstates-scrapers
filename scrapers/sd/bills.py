@@ -109,6 +109,7 @@ class SDBillScraper(Scraper, LXMLMixin):
                 classification="primary",
                 primary=True,
                 entity_type=sponsor_type,
+                chamber=chamber,
             )
 
         for keyword in page["Keywords"]:
