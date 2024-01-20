@@ -321,7 +321,7 @@ class IAVoteScraper(Scraper):
         return counts, passed
 
     def split_names(self, text):
-        junk = ["Presiding", "Mr. Speaker", "Spkr.", ".", "Speaker"]
+        junk = ["Presiding", "Mr. Speaker", "Spkr.", "Jr.", ".", "Speaker"]
         text = text.strip()
         chunks = text.split()[::-1]
         name = [chunks.pop()]
@@ -330,7 +330,7 @@ class IAVoteScraper(Scraper):
             chunk = chunks.pop()
             if len(chunk) < 3:
                 name.append(chunk)
-            elif name[-1] in ("Mr.", "Van", "De", "Vander", "Jr.", "Sr."):
+            elif name[-1] in ("Mr.", "Van", "De", "Vander"):
                 name.append(chunk)
             else:
                 name = " ".join(name).strip(",")

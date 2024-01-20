@@ -242,6 +242,7 @@ class IABillScraper(Scraper):
                 classification="primary",
                 entity_type="organization" if "COMMITTEE ON" in sponsor else "person",
                 primary=True,
+                chamber=chamber,
             )
 
         for tr in page.xpath(
