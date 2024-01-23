@@ -136,6 +136,7 @@ class NCBillScraper(Scraper):
                     classification=spon_type,
                     entity_type="person",
                     primary=(spon_type == "primary"),
+                    chamber=chamber,
                 )
         except IndexError:
             self.warning("No sponsors")
