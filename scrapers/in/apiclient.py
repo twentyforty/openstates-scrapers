@@ -72,7 +72,7 @@ class ApiClient(object):
 
     def __init__(self, scraper):
         self.scraper = scraper
-        self.apikey = os.environ["INDIANA_API_KEY"]
+        self.apikey = f'Token {os.environ["INDIANA_API_KEY"]}'
         self.user_agent = os.getenv("USER_AGENT", "openstates")
 
     @check_response

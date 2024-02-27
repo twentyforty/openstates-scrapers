@@ -37,7 +37,7 @@ class INEventScraper(Scraper):
         """
         Make request to INDIANA API
         """
-        apikey = os.environ["INDIANA_API_KEY"]
+        apikey = f'Token {os.environ["INDIANA_API_KEY"]}'
         useragent = os.getenv("USER_AGENT", self.cf_headers["User-Agent"])
         headers = {
             "Authorization": apikey,
