@@ -59,7 +59,7 @@ ENV ENVIRONMENT=prod
 ENV OPENSSL_CONF=/opt/openstates/openstates/openssl.cnf
 ENV GOOGLE_CLOUD_PROJECT="civiqa-301113"
 ENV SETTINGS_NAME="django_settings"
-ENV DATABASE_URL="postgres://pgbouncer:42571allahis1@34.118.205.29:5432/civiqa-sql-db-1"
+ENV DATABASE_URL="postgres://pgbouncer:42571allahis1@34.122.157.83:5432/civiqa-prod-db-1"
 ENV VIRGINIA_FTP_USER aibrahim
 ENV VIRGINIA_FTP_PASSWORD "AMXKa3Waws!XXHBirQk"
 ENV NEW_YORK_API_KEY "4JRIFodoL0g6StkCPOLyu4pakrUhLdm8"

@@ -3,7 +3,7 @@ steps:
 
 - id: preprocess-resources
   name: gcr.io/civiqa-301113/envsubst
-  env: ["ENV=prod", "DATABASE_URL=postgres://pgbouncer:42571allahis1@34.118.205.29:5432/civiqa-sql-db-1"]
+  env: ["ENV=prod", "DATABASE_URL=postgres://pgbouncer:42571allahis1@34.122.157.83:5432/civiqa-prod-db-1"]
   args: ["os-update-ca-cronjob.yaml"]
 
 - name: "gcr.io/cloud-builders/gke-deploy"
