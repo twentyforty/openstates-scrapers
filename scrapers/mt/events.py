@@ -1,7 +1,8 @@
 from openstates.scrape import Scraper, Event
 from utils.events import match_coordinates
 import datetime
-import dateutil
+from dateutil import relativedelta
+from dateutil import parser as date_parser
 import json
 import lxml.html
 import pytz
@@ -19,7 +20,7 @@ class MTEventScraper(Scraper):
         today = datetime.date.today()
         yield from self.scrape_cal_month(today)
         yield from self.scrape_cal_month(
-            today + dateutil.relativedelta.relativedelta(months=-1)
+            today + relativedelta.relativedelta(months=-1)
         )
 
     def scrape_upcoming(self):
@@ -39,7 +40,7 @@ class MTEventScraper(Scraper):
         url = f"https://sg001-harmony.sliq.net/00309/Harmony/en/api/Data/GetContentEntityByMonth/{date_str}/-1?lastModifiedTime=20000201050000000"
         page = self.get(url).json()
         for row in page["ContentEntityDatas"]:
-            when = dateutil.parser.parse(row["ScheduledStart"])
+            when = date_parser.parse(row["ScheduledStart"])
             if when.date() < datetime.datetime.today().date():
                 event_id = str(row["Id"])
                 event_url = f"https://sg001-harmony.sliq.net/00309/Harmony/en/PowerBrowser/PowerBrowserV2/1/-1/{event_id}"
@@ -59,7 +60,7 @@ class MTEventScraper(Scraper):
         when_date = page.xpath("//div[@id='scheduleddate']")[0].text_content()
         when_time = page.xpath("//span[@id='scheduledStarttime']")[0].text_content()
 
-        when = dateutil.parser.parse(f"{when_date} {when_time}")
+        when = date_parser.parse(f"{when_date} {when_time}")
         when = self._tz.localize(when)
 
         event = Event(

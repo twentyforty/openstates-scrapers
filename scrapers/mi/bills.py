@@ -1,4 +1,4 @@
-import dateutil
+from dateutil import parser as date_parser
 import re
 from utils.media import get_media_type
 
@@ -90,7 +90,7 @@ class MIBillScraper(Scraper):
         seen_subs = {}
         for row in page.xpath("//div[@id='History']/table/tbody/tr"):
             when = row.xpath("td[1]/text()")[0]
-            when = dateutil.parser.parse(when).date()
+            when = date_parser.parse(when).date()
 
             action = row.xpath("string(td[3])").strip()
 

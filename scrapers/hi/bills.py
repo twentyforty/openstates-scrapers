@@ -5,7 +5,7 @@ from openstates.scrape import Scraper, Bill, VoteEvent
 from .actions import Categorizer, find_committee
 from .utils import get_short_codes
 from urllib import parse as urlparse
-import dateutil
+from dateutil import parser as date_parser
 import pytz
 
 HI_URL_BASE = "https://www.capitol.hawaii.gov"
@@ -425,7 +425,7 @@ class HIBillScraper(Scraper):
         # this content isn't amenable to lxml, but it's machine generated so regex should be ok
         bill_re = r"(?P<date>\d+\/\d+\/\d+)\s+(?P<time>.*?)\s+\d+\s\<a href=\"(?P<url>.*?)\">(?P<filename>.*?)\.xml<\/a>"
         for match in re.finditer(bill_re, page, flags=re.IGNORECASE):
-            posted = dateutil.parser.parse(
+            posted = date_parser.parse(
                 f"{match.group('date')} {match.group('time')}"
             )
             posted = self.tz.localize(posted)

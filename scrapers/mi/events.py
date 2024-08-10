@@ -1,6 +1,6 @@
 import re
 import pytz
-import dateutil
+from dateutil import parser as date_parser
 import lxml
 from utils.events import match_coordinates
 from collections.abc import Generator
@@ -59,7 +59,7 @@ class MIEventScraper(Scraper):
             status = "cancelled"
             time = time.replace("Cancelled", "")
 
-        when = dateutil.parser.parse(f"{date} {time}")
+        when = date_parser.parse(f"{date} {time}")
         when = self._tz.localize(when)
 
         event = Event(

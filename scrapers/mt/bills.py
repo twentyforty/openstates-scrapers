@@ -3,7 +3,7 @@ from openstates.scrape import Scraper, Bill, VoteEvent
 from .actions import categorize_actions
 import requests
 import scrapelib
-import dateutil
+from dateutil import parser as date_parser
 import pytz
 
 
@@ -102,7 +102,7 @@ class MTBillScraper(Scraper):
     def scrape_actions(self, bill: Bill, row: dict):
         for action in row["billActions"]:
             name = action["actionType"]["description"]
-            when = dateutil.parser.parse(action["date"])
+            when = date_parser.parse(action["date"])
             when = self.TIMEZONE.localize(when)
             if "(H)" in name:
                 chamber = "lower"
