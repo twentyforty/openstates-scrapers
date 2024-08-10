@@ -1,7 +1,7 @@
 import pytz
 import urllib
 from datetime import datetime
-import dateutil
+from dateutil import parser as date_parser
 
 from openstates.scrape import Scraper, Bill, VoteEvent
 
@@ -29,7 +29,7 @@ class NEBillScraper(Scraper, LXMLMixin):
             )
 
         if session["classification"] == "special":
-            start = dateutil.parser.parse(session["start_date"])
+            start = date_parser.parse(session["start_date"])
             yield from self.scrape_special(session["identifier"], start)
         else:
             self.scrape_priorities()
